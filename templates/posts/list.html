@@ -21,7 +21,7 @@
             <div class="card-body">
                 <h5 class="card-title">{{ post.title }}</h5>
                 <h6 class="card-subtitle mb-2 text-muted">
-                    作者: {{ post.author.profile.nickname }} | {{ post.created_at|date:"Y-m-d H:i" }}
+                    作者: {{ post.author.profile.nickname|default:post.author.username }} | {{ post.created_at|date:"Y-m-d H:i" }}
                 </h6>
                 <p class="card-text">{{ post.content|linebreaks|truncatewords:30 }}</p>
                 
@@ -56,7 +56,7 @@
                     <!-- 删除按钮 -->
                     <div>
                         {% if user.is_authenticated %}
-                            {% if user == post.author or user.is_staff %}
+                            {% if user == post.author or is_staff %}
                                 <form method="post" action="{% url 'post_delete' post.id %}" style="display:inline;" onsubmit="return confirm('确定要删除这个帖子吗？');">
                                     {% csrf_token %}
                                     <button type="submit" class="btn btn-sm btn-danger">删除</button>
@@ -99,4 +99,3 @@ $(document).ready(function(){
 });
 </script>
 {% endblock %}
-

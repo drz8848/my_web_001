@@ -4,12 +4,10 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponseForbidden
 from django.db.models import Q
 from django.contrib import messages
+from django.db.models import Count
 from .models import Post, Like, Favorite
 from .forms import PostForm
-
-# 辅助函数：检查是否是管理员或拥有者
-def is_staff_or_owner(user):
-    return user.is_authenticated and (user.profile.role in ['mod', 'owner'] or user.is_superuser)
+from accounts.decorators import is_staff_or_owner, not_muted_required
 
 def home(request):
     return render(request, 'home.html')
@@ -22,31 +20,35 @@ def post_list(request):
     
     user_likes = []
     user_favs = []
+    is_staff = False
+    
     if request.user.is_authenticated:
         user_likes = Like.objects.filter(user=request.user).values_list('post_id', flat=True)
         user_favs = Favorite.objects.filter(user=request.user).values_list('post_id', flat=True)
+        is_staff = is_staff_or_owner(request.user)
 
     return render(request, 'posts/list.html', {
         'posts': posts, 
         'query': query,
         'user_likes': user_likes,
         'user_favs': user_favs,
-        'is_staff': is_staff_or_owner(request.user)
+        'is_staff': is_staff
     })
 
 @login_required
+@not_muted_required
 def post_create(request):
-    # 检查是否被禁言
-    if request.user.profile.is_muted:
-        messages.error(request, "抱歉，你已被禁言，无法发布新帖。")
-        return redirect('post_list')
-        
     if request.method == 'POST':
         form = PostForm(request.POST, request.FILES)
         if form.is_valid():
             post = form.save(commit=False)
             post.author = request.user
             post.save()
+            
+            # 更新用户发帖统计
+            from accounts.utils import update_user_statistics
+            update_user_statistics(request.user)
+            
             messages.success(request, "发布成功！")
             return redirect('post_list')
     else:
@@ -62,11 +64,13 @@ def post_delete(request, pk):
     
     if request.method == 'POST':
         post.delete()
+        
+        # 更新用户统计
+        from accounts.utils import update_user_statistics
+        update_user_statistics(request.user)
+        
         messages.success(request, "帖子已删除。")
     return redirect('post_list')
-
-# ... (保留原有的 toggle_like, toggle_favorite, favorites_list, share_post 函数不变)
-# ... 把它们放在这里 ...
 
 @login_required
 def toggle_like(request, pk):
@@ -80,6 +84,9 @@ def toggle_like(request, pk):
         else:
             post.likes_count += 1
             liked = True
+            # 更新作者获得的点赞统计
+            from accounts.utils import update_user_statistics
+            update_user_statistics(post.author)
         post.save()
         return JsonResponse({'count': post.likes_count, 'liked': liked})
     return JsonResponse({'error': 'Invalid request'}, status=400)
@@ -111,4 +118,3 @@ def share_post(request, pk):
     post.shares_count += 1
     post.save()
     return redirect('post_list')
-
