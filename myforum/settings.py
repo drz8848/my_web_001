@@ -90,8 +90,8 @@ EMAIL_HOST = 'smtp.163.com'
 EMAIL_PORT = 465
 EMAIL_USE_TLS = False
 EMAIL_USE_SSL = True
-EMAIL_HOST_USER = 'thhqm_web@163.com'  # 请替换为你的163邮箱
-EMAIL_HOST_PASSWORD = 'PDceLVmm5AYsJuWm'   # 请替换为你的163邮箱授权码
+EMAIL_HOST_USER = '@163.com'  # 请替换为你的163邮箱
+EMAIL_HOST_PASSWORD = ''   # 请替换为你的163邮箱授权码
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 EMAIL_SUBJECT_PREFIX = '[东方幻绮梦] '
 
