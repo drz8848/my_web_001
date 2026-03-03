@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+<h2>发布新帖</h2>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form|crispy }}
+    <div class="alert alert-info">💡 提示：你可以直接在内容框中输入 Emoji 表情 😊</div>
+    <button class="btn btn-success" type="submit">发布</button>
+</form>
+{% endblock %}
+

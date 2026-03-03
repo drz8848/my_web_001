@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="p-5 mb-4 bg-light rounded-3 text-center">
+    <div class="container-fluid py-5">
+        <h1 class="display-5 fw-bold">欢迎来到东方幻绮梦</h1>
+        <p class="col-md-8 fs-4 mx-auto">快来分享你的东方优秀作品年度推荐吧！</p>
+        <a class="btn btn-primary btn-lg" href="{% url 'post_list' %}" role="button">浏览帖子</a>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>我的收藏</h2>
+    <a href="{% url 'post_list' %}" class="btn btn-outline-primary">返回帖子中心</a>
+</div>
+
+<div class="row">
+    {% for post in posts %}
+    <div class="col-md-12 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ post.title }}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">
+                    作者: {{ post.author.profile.nickname }} | 发布时间: {{ post.created_at|date:"Y-m-d H:i" }}
+                </h6>
+                <p class="card-text">{{ post.content|linebreaks|truncatewords:50 }}</p>
+                
+                {% if post.image %}
+                    <img src="{{ post.image.url }}" class="img-fluid mb-2" style="max-height: 150px;">
+                {% endif %}
+                
+                {% if post.link %}
+                    <a href="{{ post.link }}" target="_blank" class="card-link">🔗 查看原链接</a>
+                {% endif %}
+
+                <div class="mt-3">
+                    <span class="me-3">❤️ {{ post.likes_count }}</span>
+                    <span class="me-3">⭐ {{ post.favorites_count }}</span>
+                    <span class="me-3">🔄 {{ post.shares_count }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="alert alert-warning text-center">
+        你还没有收藏任何帖子，快去帖子中心看看吧~
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+

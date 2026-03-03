@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+    <h2>帖子中心</h2>
+    
+    <div class="d-flex gap-2">
+        <form class="d-flex" method="get">
+            <input class="form-control me-2" type="search" name="q" placeholder="搜索帖子..." value="{{ query }}">
+            <button class="btn btn-outline-success" type="submit">搜索</button>
+        </form>
+        {% if user.is_authenticated %}
+        <a href="{% url 'post_create' %}" class="btn btn-primary">+ 发布新帖</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    {% for post in posts %}
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ post.title }}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">
+                    作者: {{ post.author.profile.nickname }} | {{ post.created_at|date:"Y-m-d H:i" }}
+                </h6>
+                <p class="card-text">{{ post.content|linebreaks|truncatewords:30 }}</p>
+                
+                {% if post.image %}
+                    <img src="{{ post.image.url }}" class="img-fluid mb-2" style="max-height: 200px;">
+                {% endif %}
+                
+                {% if post.link %}
+                    <a href="{{ post.link }}" target="_blank" class="card-link">🔗 查看链接</a>
+                {% endif %}
+
+                <!-- 整合后的交互区域 -->
+                <div class="mt-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        {% if user.is_authenticated %}
+                            <span class="me-3 action-btn like-btn" data-id="{{ post.id }}">
+                                ❤️ <span class="like-count-{{ post.id }} {% if post.id in user_likes %}liked{% endif %}">{{ post.likes_count }}</span>
+                            </span>
+                            <span class="me-3 action-btn fav-btn" data-id="{{ post.id }}">
+                                ⭐ <span class="fav-count-{{ post.id }} {% if post.id in user_favs %}favorited{% endif %}">{{ post.favorites_count }}</span>
+                            </span>
+                        {% else %}
+                            <span class="me-3">❤️ {{ post.likes_count }}</span>
+                            <span class="me-3">⭐ {{ post.favorites_count }}</span>
+                        {% endif %}
+                        <span class="me-3">🔄 {{ post.shares_count }}</span>
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'share_post' post.id %}" class="btn btn-sm btn-outline-secondary ms-2">转发</a>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- 删除按钮 -->
+                    <div>
+                        {% if user.is_authenticated %}
+                            {% if user == post.author or user.is_staff %}
+                                <form method="post" action="{% url 'post_delete' post.id %}" style="display:inline;" onsubmit="return confirm('确定要删除这个帖子吗？');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-danger">删除</button>
+                                </form>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <p>暂无帖子，快来发布第一篇吧！</p>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function(){
+    // 点赞逻辑
+    $('.like-btn').click(function(){
+        var post_id = $(this).data('id');
+        $.post("{% url 'toggle_like' 0 %}".replace('0', post_id), {'csrfmiddlewaretoken': '{{ csrf_token }}'}, function(data){
+            $('.like-count-' + post_id).text(data.count);
+            if(data.liked) $('.like-count-' + post_id).addClass('liked');
+            else $('.like-count-' + post_id).removeClass('liked');
+        });
+    });
+
+    // 收藏逻辑
+    $('.fav-btn').click(function(){
+        var post_id = $(this).data('id');
+        $.post("{% url 'toggle_favorite' 0 %}".replace('0', post_id), {'csrfmiddlewaretoken': '{{ csrf_token }}'}, function(data){
+            $('.fav-count-' + post_id).text(data.count);
+            if(data.favorited) $('.fav-count-' + post_id).addClass('favorited');
+            else $('.fav-count-' + post_id).removeClass('favorited');
+        });
+    });
+});
+</script>
+{% endblock %}
+
